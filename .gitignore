@@ -1,0 +1,23 @@
+# 테스트 파일들
+test_*.html
+debug_*.html
+clear_*.html
+force_*.html
+click_test.html
+
+# 백업 파일
+*.bak
+*.log
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# Node modules (만약 나중에 사용하게 되면)
+node_modules/
