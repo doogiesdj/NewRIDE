@@ -3,7 +3,7 @@
 // 인증 관련 상수
 const ADMIN_CREDENTIALS = {
     username: 'admin',
-    password: 'ride2025!@'  // 실제 운영 환경에서는 서버 측 인증 필요
+    password: 'NewRIDE@2026!SecurePass#'  // 실제 운영 환경에서는 서버 측 인증 필요
 };
 
 const AUTH_SESSION_KEY = 'ride_admin_session';
