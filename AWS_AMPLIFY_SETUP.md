@@ -143,9 +143,7 @@ git push origin main
 ### ✅ 사업 관리 기능 테스트
 - [ ] **"사업 관리"** 버튼 클릭
 - [ ] 로그인 모달 팝업 확인
-- [ ] **로그인 정보**:
-  - 사용자 이름: `admin`
-  - 비밀번호: `ride2025!@`
+- [ ] **로그인 정보**: 내부 관리자에게 문의
 - [ ] 관리 페이지 이동 확인
 
 ### ✅ 관리자 페이지 테스트
@@ -229,9 +227,11 @@ git push origin main
 2. "Manage variables" 클릭
 3. 변수 추가:
    ```
-   ADMIN_USERNAME = admin
-   ADMIN_PASSWORD = ride2025!@
+   ADMIN_USERNAME = [관리자 사용자명]
+   ADMIN_PASSWORD = [관리자 비밀번호]
    ```
+   
+   > ⚠️ **보안**: 실제 값은 내부 관리자에게 문의하세요.
 4. "Save" 클릭
 
 ### 알림 설정
