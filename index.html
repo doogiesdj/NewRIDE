@@ -234,41 +234,86 @@
                         }
                     }
                     
-                    function handleAdminAuth(event) {
+                    async function handleAdminAuth(event) {
                         event.preventDefault();
-                        console.log('🔍 인증 시도');
+                        console.log('🔍 Firebase 인증 시도');
                         
-                        const username = document.getElementById('adminUsername').value.trim();
+                        const email = document.getElementById('adminUsername').value.trim();
                         const password = document.getElementById('adminPassword').value;
                         
-                        // 관리자 인증 정보
-                        const ADMIN_USERNAME = 'aiaride';
-                        const ADMIN_PASSWORD = 'ride@+@ride';
+                        // 로딩 표시
+                        const submitBtn = event.target.querySelector('button[type="submit"]');
+                        const originalText = submitBtn.textContent;
+                        submitBtn.textContent = '인증 중...';
+                        submitBtn.disabled = true;
                         
-                        if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                            console.log('✅ 인증 성공 → admin.html로 이동');
+                        try {
+                            // Firebase 동적 로드 및 인증
+                            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                            const { getAuth, signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
                             
-                            // 임시 접근 토큰 생성
+                            // Firebase 설정
+                            const firebaseConfig = {
+                                apiKey: "AIzaSyC-OScWKs2zEkQBlxe8ToKCfD11ddqkHbM",
+                                authDomain: "newride-9b0b5.firebaseapp.com",
+                                projectId: "newride-9b0b5",
+                                storageBucket: "newride-9b0b5.firebasestorage.app",
+                                messagingSenderId: "824474124838",
+                                appId: "1:824474124838:web:a4d525bbd6293bc21a9ce7"
+                            };
+                            
+                            const app = initializeApp(firebaseConfig);
+                            const auth = getAuth(app);
+                            
+                            // Firebase 로그인
+                            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                            const user = userCredential.user;
+                            const token = await user.getIdToken();
+                            
+                            console.log('✅ Firebase 인증 성공:', user.email);
+                            
+                            // 세션 데이터 저장
                             const sessionData = {
-                                username: username,
+                                email: user.email,
+                                uid: user.uid,
+                                token: token,
                                 loginTime: new Date().getTime(),
                                 fromMainPage: true
                             };
-                            localStorage.setItem('ride_admin_temp_access', JSON.stringify(sessionData));
+                            localStorage.setItem('ride_admin_session', JSON.stringify(sessionData));
+                            localStorage.setItem('ride_admin_temp_access', JSON.stringify(sessionData)); // 호환성
                             
                             // 관리 페이지로 이동
                             window.location.href = 'admin.html';
-                        } else {
-                            console.log('❌ 인증 실패');
+                            
+                        } catch (error) {
+                            console.error('❌ Firebase 인증 실패:', error);
+                            
+                            // 버튼 복원
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
                             
                             const errorDiv = document.getElementById('adminAuthError');
                             if (errorDiv) {
                                 errorDiv.style.display = 'block';
-                                errorDiv.textContent = '사용자 이름 또는 비밀번호가 올바르지 않습니다';
+                                
+                                // 에러 메시지 한글화
+                                let errorMessage = '로그인에 실패했습니다';
+                                if (error.code === 'auth/invalid-email') {
+                                    errorMessage = '유효하지 않은 이메일 형식입니다';
+                                } else if (error.code === 'auth/user-not-found') {
+                                    errorMessage = '등록되지 않은 사용자입니다';
+                                } else if (error.code === 'auth/wrong-password') {
+                                    errorMessage = '비밀번호가 올바르지 않습니다';
+                                } else if (error.code === 'auth/invalid-credential') {
+                                    errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다';
+                                }
+                                
+                                errorDiv.textContent = errorMessage;
                                 
                                 setTimeout(() => {
                                     errorDiv.style.display = 'none';
-                                }, 3000);
+                                }, 5000);
                             }
                             
                             document.getElementById('adminPassword').value = '';
@@ -688,12 +733,12 @@
                 <form id="adminAuthForm" onsubmit="handleAdminAuth(event)">
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; color: #555; margin-bottom: 8px;">
-                            <i class="fas fa-user"></i> 사용자 이름
+                            <i class="fas fa-envelope"></i> 이메일
                         </label>
                         <input 
-                            type="text" 
+                            type="email" 
                             id="adminUsername" 
-                            placeholder="사용자 이름을 입력하세요"
+                            placeholder="이메일을 입력하세요 (예: admin@example.com)"
                             required
                             style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; box-sizing: border-box;"
                         >

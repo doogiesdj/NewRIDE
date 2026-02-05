@@ -1,24 +1,18 @@
 // 관리자 페이지 JavaScript
 
-// 인증 관련 상수
-const ADMIN_CREDENTIALS = {
-    username: 'aiaride',
-    password: 'ride@+@ride'  // 실제 운영 환경에서는 서버 측 인증 필요
-};
-
+// Firebase 인증 사용 (하드코딩된 비밀번호 제거)
 const AUTH_SESSION_KEY = 'ride_admin_session';
 const AUTH_EXPIRY_HOURS = 8; // 8시간 동안 세션 유지
 
 let uploadedFiles = [];
 let editingProjectId = null;
 
-// 인증 확인 함수
-function isAuthenticated() {
+// Firebase 인증 확인 함수
+async function isAuthenticated() {
     const session = localStorage.getItem(AUTH_SESSION_KEY);
-    console.log('🔍 인증 확인:', {
+    console.log('🔍 Firebase 세션 확인:', {
         sessionKey: AUTH_SESSION_KEY,
-        sessionExists: !!session,
-        sessionValue: session ? session.substring(0, 50) + '...' : 'null'
+        sessionExists: !!session
     });
     
     if (!session) {
@@ -28,23 +22,34 @@ function isAuthenticated() {
     
     try {
         const sessionData = JSON.parse(session);
+        
+        // Firebase 토큰이 있는지 확인
+        if (!sessionData.token || !sessionData.uid) {
+            console.log('❌ Firebase 토큰 없음 → 로그인 필요');
+            localStorage.removeItem(AUTH_SESSION_KEY);
+            return false;
+        }
+        
         const now = new Date().getTime();
+        const loginTime = sessionData.loginTime || now;
+        const expiry = loginTime + (AUTH_EXPIRY_HOURS * 60 * 60 * 1000);
         
         console.log('📅 세션 정보:', {
-            username: sessionData.username,
-            loginTime: new Date(sessionData.loginTime).toLocaleString(),
-            expiry: new Date(sessionData.expiry).toLocaleString(),
-            isExpired: now > sessionData.expiry
+            email: sessionData.email,
+            uid: sessionData.uid,
+            loginTime: new Date(loginTime).toLocaleString(),
+            expiry: new Date(expiry).toLocaleString(),
+            isExpired: now > expiry
         });
         
         // 세션 만료 확인
-        if (now > sessionData.expiry) {
+        if (now > expiry) {
             console.log('⏰ 세션 만료 → 삭제');
             localStorage.removeItem(AUTH_SESSION_KEY);
             return false;
         }
         
-        console.log('✅ 세션 유효 → 관리 페이지 접근 허용');
+        console.log('✅ Firebase 세션 유효 → 관리 페이지 접근 허용');
         return true;
     } catch (error) {
         console.error('❌ 세션 확인 오류:', error);
@@ -107,11 +112,25 @@ function handleLogin(event) {
 }
 
 // 로그아웃 처리
-function handleLogout() {
+async function handleLogout() {
     if (confirm('로그아웃 하시겠습니까?')) {
+        try {
+            // Firebase 로그아웃
+            const { getAuth, signOut } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+            const auth = getAuth();
+            await signOut(auth);
+            console.log('✅ Firebase 로그아웃 완료');
+        } catch (error) {
+            console.error('Firebase 로그아웃 오류:', error);
+        }
+        
+        // 로컬 세션 삭제
         localStorage.removeItem(AUTH_SESSION_KEY);
-        console.log('✅ 로그아웃 완료');
-        showLoginPage();
+        localStorage.removeItem('ride_admin_temp_access'); // 호환성
+        console.log('✅ 로컬 세션 삭제 완료');
+        
+        // 메인 페이지로 리디렉션
+        window.location.href = 'index.html';
     }
 }
 
